@@ -4,24 +4,22 @@ import {
   cli,
   defineAgent,
   voice,
-  type VAD,
-  inference,
 } from "@livekit/agents";
-import * as silero from "@livekit/agents-plugin-silero";
+import { ParticipantKind } from "@livekit/rtc-node";
 import * as google from "@livekit/agents-plugin-google";
-import * as deepgram from "@livekit/agents-plugin-deepgram";
-import * as elevenlabs from "@livekit/agents-plugin-elevenlabs";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
-import { searchJobs } from "./tools/jobTools.js";
+import { searchJobs, getWorker, saveWorker } from "./tools/jobTools.js";
+import { applyJob } from "./tools/applyJob.js";
 import { systemPrompt } from "./prompts/systemPrompt.js";
+import { Worker } from "./models/Worker.js";
 
 dotenv.config();
 
 const agent = voice.Agent.create({
   instructions: systemPrompt,
-  tools: [searchJobs],
+  tools: [searchJobs, applyJob, getWorker, saveWorker],
 });
 
 await connectDB().catch((error: Error) => {
@@ -47,9 +45,33 @@ export default defineAgent({
     });
 
     await ctx.connect();
+    const participant = await ctx.waitForParticipant()
+
+    let phone = ctx.info.acceptArguments?.identity;
+
+    if (participant.kind === ParticipantKind.SIP) {
+      phone = participant.attributes['sip.phoneNumber'];
+    }
+
+    let contextMessage = "";
+    console.log("Caller phone number:", phone);
+    if (phone) {
+      try {
+        const existingWorker = await Worker.findOne({ phone });
+        if (existingWorker) {
+          contextMessage = `The caller's phone number is ${phone}. They are a returning worker named ${existingWorker.name}. Their skill is ${existingWorker.skill} and preferred location is ${existingWorker.location}. Welcome them by name.`;
+        } else {
+          contextMessage = `The caller's phone number is ${phone}. They have not registered yet. Greet them and ask for their name and skill so you can save their profile.`;
+        }
+      } catch {
+        contextMessage = `The caller's phone number is ${phone}. They have not registered yet. Greet them and ask for their name and skill so you can save their profile.`;
+      }
+    } else {
+      contextMessage = "The caller's phone number was not available. Greet them and ask for their phone number, name, and skill so you can save their profile.";
+    }
 
     session.generateReply({
-      instructions: "Greet the user and offer your assistance.",
+      instructions: `${contextMessage} ${systemPrompt}`,
       allowInterruptions: true,
     });
   },
