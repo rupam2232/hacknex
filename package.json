@@ -1,8 +1,7 @@
 {
-  "name": "rozi-agent",
+  "name": "rojgaar",
   "version": "1.0.0",
   "type": "module",
-  "description": "Real-time Bengali-first voice agent for daily-wage workers using LiveKit, Gemini, ElevenLabs, and MongoDB",
   "main": "src/index.ts",
   "scripts": {
     "seed": "tsx seed.ts",
@@ -28,5 +27,12 @@
     "@types/node": "^26.6.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "@google/genai@2.24.0": true,
+    "@livekit/local-inference@0.2.7": true,
+    "esbuild@0.28.2": true,
+    "onnxruntime-node@1.24.3": true,
+    "protobufjs@7.6.6": true
   }
 }
