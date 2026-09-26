@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from 'next/headers';
 import { verifyOTP } from "@/lib/twilio";
 import connectDB from "@/lib/db";
 import { User } from "@/lib/models/User";
@@ -21,13 +22,15 @@ export async function POST(req: NextRequest) {
 
     if (user) {
       const token = generateToken(user.phone, user.name, user.role);
+      const cookieStore = await cookies();
+      cookieStore.set('token', token, {
+        httpOnly: true, // Prevents client-side JS from accessing the cookie
+        sameSite: 'strict', // Protects against CSRF attacks
+        maxAge: 60 * 60 * 24 * 7, // 1 week in seconds
+        path: '/', // Accessible across the entire site
+      });
       return NextResponse.json(
         { success: true, isRegistered: true, user: { phone: user.phone, name: user.name, role: user.role } },
-        {
-          headers: {
-            "Set-Cookie": `token=${token}; Path=/; HttpOnly; Max-Age=604800; SameSite=Strict`,
-          },
-        }
       );
     }
 

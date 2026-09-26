@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret-change-me";
-const JWT_EXPIRES_IN = "7d";
+const JWT_EXPIRES_IN = "30d";
 
 export function generateToken(phone: string, name: string, role: string): string {
   return jwt.sign(
