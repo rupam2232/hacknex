@@ -1,28 +1,34 @@
 import mongoose from "mongoose";
 
-const jobSchema = new mongoose.Schema({
-  employerPhone: { type: String, required: true },
-  title: { type: String, required: true },
-  workersCount: { type: Number, required: true },
-  date: { type: String, required: true },
-  startTime: { type: String, required: true },
-  duration: { type: String, required: true },
-  wage: { type: Number, required: true },
-  description: { type: String, required: true },
-  location: { type: String, required: true },
-  coordinates: {
-    type: { type: String, enum: ["Point"] },
-    coordinates: { type: [Number] },
+const jobSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    skill: { type: String, enum: ["painter", "carpenter", "mason", "electrician", "plumber"], lowercase: true, required: true },
+    region: { type: String, required: true },
+    area: { type: String, required: true },
+    aliases: [String],
+    dailyWage: { type: Number, required: true },
+    contractorName: { type: String, required: true },
+    contractorPhone: { type: String, required: true },
+    status: { type: String, default: "active" },
+    locationCoordinates: {
+      type: { type: String, default: "Point" },
+      coordinates: { type: [Number], required: true }
+    }
   },
-  status: {
-    type: String,
-    enum: ["Open", "In Progress", "Done", "Cancelled"],
-    default: "Open",
-  },
-  createdAt: { type: Date, default: Date.now },
-});
+  { timestamps: true }
+);
 
-jobSchema.index({ coordinates: "2dsphere" });
-jobSchema.index({ employerPhone: 1, createdAt: -1 });
+jobSchema.index({ skill: 1, status: 1 });
+jobSchema.index({ locationCoordinates: "2dsphere" });
 
-export const Job = mongoose.model("Job", jobSchema);
+if (mongoose.models && (mongoose.models as any).Job) {
+  delete (mongoose.models as any).Job;
+}
+
+const JobModel = mongoose.models.Job || mongoose.model("Job", jobSchema);
+
+export { JobModel as Job };
+export default JobModel;
+
+

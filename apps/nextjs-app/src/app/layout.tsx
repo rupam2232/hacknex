@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Jeebika - Employer Portal",
+  title: "Rojgaar - Employer Portal",
   description: "Post jobs, find workers, manage applications",
 };
 

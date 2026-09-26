@@ -25,7 +25,7 @@ export default function JobsPage() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-blue-700">Jeebika</h1>
+          <h1 className="text-xl font-bold text-blue-700"> Rojgaar</h1>
           <Link href="/" className="text-blue-600 hover:underline">← Home</Link>
         </div>
       </nav>
@@ -47,9 +47,8 @@ export default function JobsPage() {
                     <p className="text-gray-600 mt-1">{job.location}</p>
                     <p className="text-gray-500 text-sm mt-2">Employer: {job.employerPhone}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    job.status === "Open" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${job.status === "Open" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                    }`}>
                     {job.status}
                   </span>
                 </div>

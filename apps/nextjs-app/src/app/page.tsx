@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white p-6">
       <div className="max-w-2xl text-center">
-        <h1 className="text-5xl font-bold mb-4">Jeebika</h1>
+        <h1 className="text-5xl font-bold mb-4">Rojgaar</h1>
         <p className="text-xl mb-8 opacity-80">
           Connecting employers with skilled workers for daily-wage jobs
         </p>

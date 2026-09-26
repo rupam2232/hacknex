@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"worker" | "employer">("employer");
   const [step, setStep] = useState<"form" | "otp">("form");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,8 +16,9 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!name || !phone || phone.length < 10) {
-      setError("Please fill in all fields correctly");
+    setMessage("");
+    if (!name.trim() || !phone || phone.length < 10) {
+      setError("Please enter a valid full name and phone number");
       return;
     }
     setLoading(true);
@@ -31,12 +31,12 @@ export default function SignupPage() {
       const data = await res.json();
       if (data.success) {
         setStep("otp");
-        setMessage("OTP sent! Check your phone.");
+        setMessage("OTP sent via SMS! Please check your mobile phone.");
       } else {
-        setError(data.error || "Failed to send OTP");
+        setError(data.error || "Failed to send OTP. Check Twilio settings.");
       }
     } catch {
-      setError("Network error");
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -53,10 +53,11 @@ export default function SignupPage() {
       });
       const data = await res.json();
       if (data.success) {
+        // Now register user as Employer (passwordless)
         const registerRes = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, phone, role }),
+          body: JSON.stringify({ name, phone, role: "employer" }),
         });
         const registerData = await registerRes.json();
         if (registerData.success) {
@@ -70,7 +71,7 @@ export default function SignupPage() {
         setLoading(false);
       }
     } catch {
-      setError("Network error");
+      setError("Network error during verification.");
       setLoading(false);
     }
   };
@@ -78,75 +79,86 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-2xl font-bold mb-6 text-center">Create Account</h1>
+        <div className="text-center mb-6">
+          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 font-semibold text-xs rounded-full uppercase tracking-wider mb-2">
+            Employer Portal
+          </span>
+          <h1 className="text-2xl font-bold text-gray-900">Employer Sign Up</h1>
+          <p className="text-sm text-gray-500 mt-1">Passwordless authentication via SMS OTP</p>
+        </div>
 
         {step === "form" ? (
           <form onSubmit={handleSubmit}>
-            <p className="text-gray-600 mb-4 text-center">Enter your details to get started</p>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Full Name"
-              required
-              className="w-full px-4 py-3 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+91XXXXXXXXXX"
-              required
-              className="w-full px-4 py-3 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as "worker" | "employer")}
-              className="w-full px-4 py-3 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
-            >
-              <option value="employer">Employer</option>
-              <option value="worker">Worker</option>
-            </select>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Employer / Company Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. John Doe or Acme Construction"
+                required
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobile Phone Number
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91XXXXXXXXXX"
+                required
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {loading ? "Sending..." : "Send OTP"}
+              {loading ? "Sending OTP..." : "Send OTP"}
             </button>
           </form>
         ) : (
-          <>
-            <p className="text-gray-600 mb-4 text-center">Enter the OTP sent to {phone}</p>
+          <div>
+            <p className="text-gray-600 mb-4 text-center text-sm">
+              Enter the 6-digit OTP code sent to <span className="font-semibold text-gray-900">{phone}</span>
+            </p>
             <input
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               placeholder="Enter 6-digit OTP"
               maxLength={6}
-              className="w-full px-4 py-3 border rounded-lg mb-4 text-center text-xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3 border rounded-lg mb-4 text-center text-xl tracking-widest font-mono focus:ring-2 focus:ring-blue-500 outline-none"
             />
             <button
               onClick={handleVerifyOTP}
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 mb-3"
+              disabled={loading || otp.length < 4}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 mb-3 transition"
             >
               {loading ? "Verifying..." : "Verify & Sign Up"}
             </button>
             <button
-              onClick={() => { setStep("form"); setOtp(""); }}
-              className="w-full py-2 text-gray-600 hover:text-gray-800"
+              onClick={() => { setStep("form"); setOtp(""); setError(""); setMessage(""); }}
+              className="w-full py-2 text-sm text-gray-600 hover:text-gray-900"
             >
-              Change details
+              Edit phone details
             </button>
-          </>
+          </div>
         )}
 
-        {error && <p className="mt-3 text-red-500 text-center text-sm">{error}</p>}
-        {message && <p className="mt-3 text-green-600 text-center text-sm">{message}</p>}
+        {error && <p className="mt-3 text-red-500 text-center text-sm font-medium">{error}</p>}
+        {message && <p className="mt-3 text-green-600 text-center text-sm font-medium">{message}</p>}
 
         <p className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{" "}
+          Already have an employer account?{" "}
           <a href="/login" className="text-blue-600 font-semibold hover:underline">
             Login
           </a>
@@ -155,3 +167,4 @@ export default function SignupPage() {
     </div>
   );
 }
+

@@ -1,23 +1,28 @@
 import Twilio from "twilio";
 
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
-const TWILIO_VERIFY_SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID;
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-  throw new Error("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required");
+  if (!accountSid || !authToken) {
+    return null;
+  }
+  return Twilio(accountSid, authToken);
 }
 
-const client = Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
-
 export async function sendOTP(phone: string): Promise<{ success: boolean; status?: string; error?: string }> {
-  if (!TWILIO_VERIFY_SERVICE_SID) {
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!verifyServiceSid) {
     return { success: false, error: "TWILIO_VERIFY_SERVICE_SID not configured" };
   }
 
+  const client = getTwilioClient();
+  if (!client) {
+    return { success: false, error: "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required" };
+  }
+
   try {
-    const verification = await client.verify.v2.services(TWILIO_VERIFY_SERVICE_SID)
+    const verification = await client.verify.v2.services(verifyServiceSid)
       .verifications
       .create({ to: phone, channel: "sms" });
     return { success: true, status: verification.status };
@@ -28,12 +33,18 @@ export async function sendOTP(phone: string): Promise<{ success: boolean; status
 }
 
 export async function verifyOTP(phone: string, otp: string): Promise<{ success: boolean; error?: string }> {
-  if (!TWILIO_VERIFY_SERVICE_SID) {
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!verifyServiceSid) {
     return { success: false, error: "TWILIO_VERIFY_SERVICE_SID not configured" };
   }
 
+  const client = getTwilioClient();
+  if (!client) {
+    return { success: false, error: "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required" };
+  }
+
   try {
-    const verificationCheck = await client.verify.v2.services(TWILIO_VERIFY_SERVICE_SID)
+    const verificationCheck = await client.verify.v2.services(verifyServiceSid)
       .verificationChecks
       .create({ to: phone, code: otp });
 
@@ -49,15 +60,22 @@ export async function verifyOTP(phone: string, otp: string): Promise<{ success: 
 }
 
 export async function sendSMS(to: string, body: string): Promise<void> {
-  if (!TWILIO_PHONE_NUMBER) {
+  const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+  if (!phoneNumber) {
     console.warn("TWILIO_PHONE_NUMBER not set, skipping SMS:", body);
+    return;
+  }
+
+  const client = getTwilioClient();
+  if (!client) {
+    console.warn("TWILIO credentials not set, skipping SMS:", body);
     return;
   }
 
   try {
     await client.messages.create({
       body,
-      from: TWILIO_PHONE_NUMBER,
+      from: phoneNumber,
       to,
     });
     console.log(`SMS sent to ${to}`);
@@ -65,3 +83,4 @@ export async function sendSMS(to: string, body: string): Promise<void> {
     console.error("SMS send error:", error.message);
   }
 }
+

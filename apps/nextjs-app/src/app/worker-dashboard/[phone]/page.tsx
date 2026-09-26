@@ -35,7 +35,7 @@ export default function WorkerDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-blue-700">Jeebika</h1>
+          <h1 className="text-xl font-bold text-blue-700">Rojgaar</h1>
           <span className="text-gray-600">Welcome, {workerName}!</span>
         </div>
       </nav>

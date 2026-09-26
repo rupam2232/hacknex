@@ -46,7 +46,7 @@ export default function ApplicationsPage() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-blue-700">Jeebika</h1>
+          <h1 className="text-xl font-bold text-blue-700">Rojgaar</h1>
           <button onClick={() => router.back()} className="text-blue-600 hover:underline">← Back</button>
         </div>
       </nav>
@@ -65,11 +65,10 @@ export default function ApplicationsPage() {
                   <p className="text-gray-600 text-sm">{app.workerPhone}</p>
                   <p className="text-gray-500 text-sm">Location: {app.workerLocation}</p>
                   <p className="text-gray-500 text-sm">Wage Expected: ₹{app.wageExpectation || "N/A"}/day</p>
-                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                    app.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                    app.status === "accepted" ? "bg-green-100 text-green-800" :
-                    "bg-red-100 text-red-800"
-                  }`}>
+                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${app.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                      app.status === "accepted" ? "bg-green-100 text-green-800" :
+                        "bg-red-100 text-red-800"
+                    }`}>
                     {app.status}
                   </span>
                 </div>

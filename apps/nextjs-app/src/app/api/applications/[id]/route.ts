@@ -19,8 +19,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const jobTitle = (app.jobId as any).title || "Unknown Job";
     const msg = status === "accepted"
-      ? `[Jeebika] Congratulations! Your application for '${jobTitle}' has been ACCEPTED.`
-      : `[Jeebika] Your application for '${jobTitle}' has been declined. Keep looking!`;
+      ? `[Rojgaar] Congratulations! Your application for '${jobTitle}' has been ACCEPTED.`
+      : `[Rojgaar] Your application for '${jobTitle}' has been declined. Keep looking!`;
     await sendSMS(app.workerPhone, msg);
 
     return NextResponse.json({ success: true, application: app });

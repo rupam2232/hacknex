@@ -5,13 +5,6 @@ import { Application } from "@/lib/models/Application";
 import { sendSMS } from "@/lib/twilio";
 import { twiml } from "twilio";
 
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-
-if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-  throw new Error("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required");
-}
-
 // GET endpoint for verification
 export async function GET() {
   return NextResponse.json({ success: true, message: "SMS reply webhook is reachable!" });
@@ -55,12 +48,12 @@ export async function POST(req: NextRequest) {
     if (text === "0") {
       latestApp.status = "accepted";
       await latestApp.save();
-      await sendSMS(latestApp.workerPhone, `[Jeebika] Your application for '${jobTitle}' has been ACCEPTED.`);
+      await sendSMS(latestApp.workerPhone, `[Rojgaar] Your application for '${jobTitle}' has been ACCEPTED.`);
       twimlResponse.message(`You have ACCEPTED ${latestApp.workerName}'s application for '${jobTitle}'.`);
     } else if (text === "1") {
       latestApp.status = "rejected";
       await latestApp.save();
-      await sendSMS(latestApp.workerPhone, `[Jeebika] Your application for '${jobTitle}' has been declined.`);
+      await sendSMS(latestApp.workerPhone, `[Rojgaar] Your application for '${jobTitle}' has been declined.`);
       twimlResponse.message(`You have REJECTED ${latestApp.workerName}'s application for '${jobTitle}'.`);
     } else {
       twimlResponse.message(`Invalid response "${text}". Reply exactly 0 to ACCEPT or 1 to REJECT.`);

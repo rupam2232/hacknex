@@ -4,7 +4,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "default-secret-change-me";
 const JWT_EXPIRES_IN = "7d";
 
 export function generateToken(phone: string, name: string, role: string): string {
-  return jwt.sign({ phone, name, role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(
+    { phone, name, role, iat: Math.floor(Date.now() / 1000) },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
 }
 
 export function verifyToken(token: string): { phone: string; name: string; role: string } | null {

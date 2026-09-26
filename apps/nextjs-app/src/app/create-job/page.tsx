@@ -1,24 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function CreateJobPage() {
   const [form, setForm] = useState({
     title: "",
-    workersCount: "",
-    date: "",
-    startTime: "",
-    duration: "",
-    wage: "",
-    description: "",
-    location: "",
+    skill: "painter",
+    region: "",
+    area: "",
+    aliases: "",
+    dailyWage: "",
+    contractorName: "",
+    contractorPhone: "",
+    status: "active",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    // Fetch user info to auto-fill contractor details
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setForm((prev) => ({
+            ...prev,
+            contractorName: prev.contractorName || data.user.name || "",
+            contractorPhone: prev.contractorPhone || data.user.phone || "",
+          }));
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,9 +47,15 @@ export default function CreateJobPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
-          workersCount: parseInt(form.workersCount),
-          wage: parseInt(form.wage),
+          title: form.title,
+          skill: form.skill.toLowerCase(),
+          region: form.region,
+          area: form.area,
+          aliases: form.aliases ? form.aliases.split(",").map((s) => s.trim()).filter(Boolean) : [],
+          dailyWage: parseFloat(form.dailyWage),
+          contractorName: form.contractorName,
+          contractorPhone: form.contractorPhone,
+          status: form.status,
         }),
       });
       const data = await res.json();
@@ -51,117 +74,135 @@ export default function CreateJobPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-blue-700">Jeebika</h1>
-          <Link href="/dashboard" className="text-blue-600 hover:underline">← Back to Dashboard</Link>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold text-blue-700">Rojgaar</h1>
+            <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded-full">
+              Employer Portal
+            </span>
+          </div>
+          <Link href="/dashboard" className="text-sm text-blue-600 font-medium hover:underline">
+            ← Back to Dashboard
+          </Link>
         </div>
       </nav>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">Post a New Job</h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Post a New Job</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Fill in job requirement details for workers and LiveKit voice agent matching.
+          </p>
+        </div>
 
-        {error && <p className="mb-4 text-red-500">{error}</p>}
-        {message && <p className="mb-4 text-green-600">{message}</p>}
+        {error && <div className="mb-4 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">{error}</div>}
+        {message && <div className="mb-4 p-4 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm">{message}</div>}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6 space-y-5 border border-gray-100">
           <div>
-            <label className="block text-sm font-medium mb-1">Job Title *</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Job Title <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="e.g., Need 2 painters for house painting"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+              placeholder="e.g., Need 2 House Painters for 3 Days"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Workers Needed *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Required Skill / Profession <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={form.skill}
+                onChange={(e) => setForm({ ...form, skill: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white"
+              >
+                <option value="painter">Painter</option>
+                <option value="carpenter">Carpenter</option>
+                <option value="mason">Mason</option>
+                <option value="electrician">Electrician</option>
+                <option value="plumber">Plumber</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Daily Wage (₹ per day) <span className="text-red-500">*</span>
+              </label>
               <input
                 type="number"
                 required
-                value={form.workersCount}
-                onChange={(e) => setForm({ ...form, workersCount: e.target.value })}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Wage per Day (₹) *</label>
-              <input
-                type="number"
-                required
-                value={form.wage}
-                onChange={(e) => setForm({ ...form, wage: e.target.value })}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                min={1}
+                value={form.dailyWage}
+                onChange={(e) => setForm({ ...form, dailyWage: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+                placeholder="e.g., 800"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Date *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Region / City <span className="text-red-500">*</span>
+              </label>
               <input
-                type="date"
+                type="text"
                 required
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.region}
+                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+                placeholder="e.g., Kolkata or West Bengal"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium mb-1">Start Time *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Area / Locality <span className="text-red-500">*</span>
+              </label>
               <input
-                type="time"
+                type="text"
                 required
-                value={form.startTime}
-                onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                value={form.area}
+                onChange={(e) => setForm({ ...form, area: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+                placeholder="e.g., Salt Lake Sector V"
               />
             </div>
           </div>
+
+
+
           <div>
-            <label className="block text-sm font-medium mb-1">Duration *</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Aliases / Search Tags (comma separated)
+            </label>
             <input
               type="text"
-              required
-              value={form.duration}
-              onChange={(e) => setForm({ ...form, duration: e.target.value })}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="e.g., 8 hours, Full day"
+              value={form.aliases}
+              onChange={(e) => setForm({ ...form, aliases: e.target.value })}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+              placeholder="similar place releted to location"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Location *</label>
-            <input
-              type="text"
-              required
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="e.g., Salt Lake, Kolkata"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Description *</label>
-            <textarea
-              required
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={4}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Describe the job responsibilities..."
-            />
-          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+            className="w-full py-3.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 shadow-md transition"
           >
-            {loading ? "Posting..." : "Post Job"}
+            {loading ? "Posting Job..." : "Publish Job Post"}
           </button>
         </form>
       </main>
     </div>
   );
 }
+

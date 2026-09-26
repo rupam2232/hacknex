@@ -1,11 +1,5 @@
 import mongoose from "mongoose";
 
-const MONGODB_URL = process.env.MONGODB_URL as string;
-
-if (!MONGODB_URL) {
-  throw new Error("MONGODB_URL is not defined in environment variables");
-}
-
 let cached = (globalThis as any).mongoose;
 
 if (!cached) {
@@ -17,16 +11,27 @@ async function connectDB(): Promise<mongoose.Connection> {
     return cached.conn;
   }
 
+  const mongodbUrl = process.env.MONGODB_URL;
+  if (!mongodbUrl) {
+    throw new Error("MONGODB_URL is not defined in environment variables");
+  }
+
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URL).then((mongoose) => {
-      console.log("✅ MongoDB connected (employer portal)");
-      return mongoose;
+    cached.promise = mongoose.connect(mongodbUrl).then((mongooseInstance) => {
+      console.log("✅ MongoDB connected");
+      return mongooseInstance;
     });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (err) {
+    cached.promise = null;
+    throw err;
+  }
 }
 
 export default connectDB;
 export { connectDB };
+
